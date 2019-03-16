@@ -9,9 +9,9 @@ var io = require('socket.io')(server);
 var redis = require('redis');
 var redisClient = redis.createClient(); // this creates a new client
 
-const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
-const leadboardRouter = require("./Routes/leaderboardRouter");
+var mongoose = require("mongoose");
+var bodyParser = require("body-parser");
+var leadboardRouter = require("./Routes/leaderboardRouter");
 
 server.listen(port);
 console.log("server started on port " + port);
@@ -35,15 +35,7 @@ redisClient.on('error', function (err) {
     console.log('Something went wrong ' + err);
 });
 
-
-redisClient.set('my test key', 'my test value', redis.print);
-redisClient.get('my test key', function (error, result) {
-    if (error) {
-        console.log(error);
-        throw error;
-    }
-    console.log('GET result ->' + result);
-});
+app.set('redisio', redisClient);
 
 // setting body parser middleware 
 app.use(bodyParser.json());

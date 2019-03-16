@@ -3,14 +3,28 @@ const Leaderboard =  require('../models/leaderboardModel');
 const leaderboardRouter = express.Router();
 leaderboardRouter.route('/')
     .get((req, res) => {
-        Leaderboard.find({}, (err, leaderboard) => {
-			res.json(leaderboard);
-        })  
+        // Leaderboard.find({}, (err, leaderboard) => {
+			var redisClient = req.app.get('redisio');
+			redisClient.zrevrange("leaderboard", 0, 10, function (err, list) {
+				if (err) throw err;
+				// console.log("plain range:", list);
+				res.status(201).send(list);
+			});
+
+			// res.json(leaderboard);
+        // })  
     })
     .post((req, res) => {
         let leaderboard = new Leaderboard(req.body);
         leaderboard.save();
         res.status(201).send(leaderboard);
+    })
+	
+leaderboardRouter.route('/all')
+    .get((req, res) => {
+        Leaderboard.find({}, (err, leaderboard) => {
+			res.json(leaderboard);
+        })  
     })
 
 // Middleware 
@@ -43,6 +57,10 @@ leaderboardRouter.route('/:userId')
 			
 			req.leaderboard.updateHistory.numberUpdate = req.leaderboard.updateHistory.numberUpdate + 1;			
 			req.leaderboard.updateHistory.timeChange.push(seconds);
+			
+			// update redis data
+			var redisClient = req.app.get('redisio');			
+			redisClient.zadd("leaderboard", req.body.score, req.params.userId);
 			
 			// emit one signal to client
 			var io = req.app.get('socketio');			

@@ -39,9 +39,10 @@
 			createTable();
 		}
 		
-		function GetAllClicked() {
+		function GetAllClicked() {			
+			const urlID = Url + "/all";
 			
-			$.getJSON(Url, function(result) {					
+			$.getJSON(urlID, function(result) {					
 				for (i in result) {
 					addRow(result[i]);
 				}
