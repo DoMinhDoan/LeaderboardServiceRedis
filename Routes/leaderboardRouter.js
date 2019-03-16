@@ -3,16 +3,12 @@ const Leaderboard =  require('../models/leaderboardModel');
 const leaderboardRouter = express.Router();
 leaderboardRouter.route('/')
     .get((req, res) => {
-        // Leaderboard.find({}, (err, leaderboard) => {
-			var redisClient = req.app.get('redisio');
-			redisClient.zrevrange("leaderboard", 0, 10, function (err, list) {
-				if (err) throw err;
-				// console.log("plain range:", list);
-				res.status(201).send(list);
-			});
-
-			// res.json(leaderboard);
-        // })  
+		var redisClient = req.app.get('redisio');
+		redisClient.zrevrange("leaderboard", 0, 10, function (err, list) {
+			if (err) throw err;
+			// console.log("plain range:", list);
+			res.status(201).send(list);
+		});
     })
     .post((req, res) => {
         let leaderboard = new Leaderboard(req.body);
