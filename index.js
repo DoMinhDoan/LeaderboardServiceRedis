@@ -5,7 +5,9 @@ var port = process.env.PORT || 3000;
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
-// var uuid = require("uuid");
+
+var redis = require('redis');
+var redisClient = redis.createClient(); // this creates a new client
 
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
@@ -22,6 +24,26 @@ const con = mongoose
   )
   .then(() => console.log("mongoDB connected"))
   .catch(err => console.log(err));
+  
+  
+// redis database
+redisClient.on('connect', function() {
+    console.log('Redis client connected');
+});
+
+redisClient.on('error', function (err) {
+    console.log('Something went wrong ' + err);
+});
+
+
+redisClient.set('my test key', 'my test value', redis.print);
+redisClient.get('my test key', function (error, result) {
+    if (error) {
+        console.log(error);
+        throw error;
+    }
+    console.log('GET result ->' + result);
+});
 
 // setting body parser middleware 
 app.use(bodyParser.json());
