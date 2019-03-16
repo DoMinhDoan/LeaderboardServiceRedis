@@ -1,0 +1,27 @@
+{
+  "name": "leaderboardservice",
+  "version": "1.0.0",
+  "description": "Implement a leaderboard service that could be consumed by a game client.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DoMinhDoan/LeaderboardService.git"
+  },
+  "author": "Do Minh Doan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DoMinhDoan/LeaderboardService/issues"
+  },
+  "homepage": "https://github.com/DoMinhDoan/LeaderboardService#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "dotenv": "^7.0.0",
+    "express": "^4.16.4",
+    "mongoose": "^5.4.19",
+    "socket.io": "^2.2.0",
+    "uuid": "^3.3.2"
+  }
+}

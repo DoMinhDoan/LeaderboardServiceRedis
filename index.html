@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Leaderboard Service Challenge</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form textarea{ border: 1 solid; padding: 10px; width: 100%; margin-right: .5%; }
+      form input[type=button] { width: 10%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      form button { width: 10%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+	<!-- <form method="post" name="form1" id="form1"> -->
+	<form>
+		<!-- <input type="text" id="message" autocomplete="off" /> -->
+		<textarea name="message" id="message" cols="40" rows="10"></textarea>
+		<li>
+		<input type="button" id="connectBtn" value="Connect" onclick="ConnectClicked()">
+		<input type="button" id="newUserBtn" value="New User" onclick="NewUserClicked()">		
+		<input type="button" id="updateBtn" value="Update" onclick="UpdateClicked()" disabled="disabled">
+		<input type="button" id="deleteBtn" value="Delete" onclick="DeleteClicked()" disabled="disabled">
+	</form>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+	  
+		var socket = io();
+		const Url = 'http://localhost:3000/api/leaderboard';
+		var playerID = "";
+		
+		function GetAllClicked() {			
+			$.getJSON(Url, function(result) {
+					$('#messages').append($('<li>').text(JSON.stringify(result)));
+			});
+		}
+		
+		function ConnectClicked() {			
+			var id = $('#message').val();			
+			const urlID = Url + "/" + id;
+			
+			$.ajax({
+				url: urlID,
+				type: 'GET',
+				success: function(result) {
+					$('#messages').append($('<li>').text(JSON.stringify(result)));
+					
+					playerID = id;					
+					document.getElementById("connectBtn").disabled = true;
+					document.getElementById("newUserBtn").disabled = true;
+					document.getElementById("updateBtn").disabled = false;
+					document.getElementById("deleteBtn").disabled = false;
+					
+					$('#message').val('');
+				},
+				error: function(error) {
+					$('#messages').append($('<li>').text(JSON.stringify(error)));
+				}
+			});
+		}
+		
+		function UpdateClicked() {
+			const urlID = Url + "/" + playerID;
+			const data = JSON.parse($('#message').val());
+			
+			$.ajax({
+				url: urlID,
+				type: 'PUT',
+				data: data,
+				success: function(result) {
+					$('#messages').append($('<li>').text(JSON.stringify(result)));
+					
+					$('#message').val('');
+				},
+				error: function(error) {
+					$('#messages').append($('<li>').text(JSON.stringify(error)));
+				}
+			});			
+			
+		}
+		
+		function NewUserClicked() {
+			var data = {
+				"username": "NoName",
+				"score": 0,
+				"updateHistory":
+				{
+					"numberUpdate": 0
+				}
+			}
+			
+			var strValue = $('#message').val();
+			if (strValue) {
+				data = JSON.parse(strValue);
+			}
+			
+			$.ajax({
+				url: Url,
+				type: 'POST',
+				data: data,
+				success: function(result) {
+					$('#messages').append($('<li>').text(JSON.stringify(result)));			
+					
+					playerID = result._id;
+					document.getElementById("connectBtn").disabled = true;
+					document.getElementById("newUserBtn").disabled = true;
+					document.getElementById("updateBtn").disabled = false;
+					document.getElementById("deleteBtn").disabled = false;
+					
+					$('#message').val('');
+				},
+				error: function(error) {
+					$('#messages').append($('<li>').text(JSON.stringify(error)));
+				}
+			});
+		}
+		
+		function DeleteClicked() {
+			const urlID = Url + "/" + playerID;
+			
+			$.ajax({
+				url: urlID,
+				type: 'DELETE',
+				success: function(result) {
+					$('#messages').append($('<li>').text(JSON.stringify(result)));
+					
+					$('#message').val('');
+				},
+				error: function(error) {
+					$('#messages').append($('<li>').text(JSON.stringify(error)));
+				}
+			});			
+			
+		}
+		
+		$(function() {		
+			var thisPlayerId;
+			$('form').submit(function(e){
+				e.preventDefault();	//prevents page reloading
+				return false;
+			});
+		
+		socket.on('connection', function(msg){
+			thisPlayerId = msg;
+		});
+		socket.on('connected', function(msg){
+			$('#messages').append($('<li>').text(msg));
+		});
+		socket.on('disconnected', function(msg){
+			$('#messages').append($('<li>').text(msg));
+		});
+		socket.on('UpdateScore', function(msg){
+			$('#messages').append($('<li>').text("User " + msg + " updated with new score"));
+		});		
+	  });
+	  
+
+	</script>
+  </body>
+</html>

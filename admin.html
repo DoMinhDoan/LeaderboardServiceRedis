@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Leaderboard Service Challenge</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form textarea{ border: 1 solid; padding: 10px; width: 100%; margin-right: .5%; }
+      form input[type=button] { width: 10%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      form button { width: 10%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      table { width: 70%; font: 17px Calibri; }      
+      table, th, td { border: solid 1px #DDD; border-collapse: collapse; padding: 2px 3px; text-align: center; }
+    </style>
+  </head>
+  <body onload="createTable()">
+	<!--THE CONTAINER WHERE WE'll ADD THE DYNAMIC TABLE-->
+	<div id="cont"></div>
+	<ul id="messages"></ul>
+	<form>
+		<input type="button" id="refresh" value="Refresh" onclick="RefreshClicked()">
+	</form>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+
+
+		
+		var socket = io();
+		const Url = 'http://localhost:3000/api/leaderboard';
+		var playerID = "";
+		
+		function RefreshClicked() {			
+			$('#cont').empty();
+			createTable();
+		}
+		
+		function GetAllClicked() {
+			
+			$.getJSON(Url, function(result) {					
+				for (i in result) {
+					addRow(result[i]);
+				}
+			});
+		}
+		
+		function DeleteClicked(userID) {
+			const urlID = Url + "/" + userID;
+			
+			$.ajax({
+				url: urlID,
+				type: 'DELETE',
+				success: function(result) {					
+					<!-- $('#message').val(''); -->
+				},
+				error: function(error) {
+					$('#messages').append($('<li>').text(JSON.stringify(error)));
+				}
+			});			
+			
+		}
+		
+		$(function() {		
+			var thisPlayerId;
+			$('form').submit(function(e){
+				e.preventDefault();	//prevents page reloading
+				return false;
+			});
+		
+			socket.on('connection', function(msg){
+				thisPlayerId = msg;
+			});
+			socket.on('connected', function(msg){
+				$('#messages').append($('<li>').text(msg));
+			});
+			socket.on('disconnected', function(msg){
+				$('#messages').append($('<li>').text(msg));
+			});	
+		});
+	
+		// ARRAY FOR HEADER.
+		var arrHead = new Array();
+		arrHead = ['', 'UserID', 'User Name', 'Score', 'Update History'];      // SIMPLY ADD OR REMOVE VALUES IN THE ARRAY FOR TABLE HEADERS.
+		var index = 0;
+
+		// FIRST CREATE A TABLE STRUCTURE BY ADDING A FEW HEADERS AND
+		// ADD THE TABLE TO YOUR WEB PAGE.
+		function createTable() {
+			var empTable = document.createElement('table');
+			empTable.setAttribute('id', 'empTable');            // SET THE TABLE ID.
+
+			var tr = empTable.insertRow(-1);
+
+			for (var h = 0; h < arrHead.length; h++) {
+				var th = document.createElement('th');          // TABLE HEADER.
+				th.innerHTML = arrHead[h];
+				tr.appendChild(th);
+			}
+
+			var div = document.getElementById('cont');
+			div.appendChild(empTable);    // ADD THE TABLE TO YOUR WEB PAGE.
+			
+			GetAllClicked();	
+		}
+
+		// ADD A NEW ROW TO THE TABLE.s
+		function addRow(user) {
+			var empTab = document.getElementById('empTable');
+
+			var rowCnt = empTab.rows.length;        // GET TABLE ROW COUNT.
+			var tr = empTab.insertRow(rowCnt);      // TABLE ROW.
+			tr = empTab.insertRow(rowCnt);
+
+			for (var c = 0; c < arrHead.length; c++) {
+				var td = document.createElement('td');          // TABLE DEFINITION.
+				td = tr.insertCell(c);
+
+				if (c == 0) {           // FIRST COLUMN.
+					// ADD A BUTTON.
+					var button = document.createElement('input');
+
+					// SET INPUT ATTRIBUTE.
+					button.setAttribute('type', 'button');
+					button.setAttribute('value', 'Remove');
+					button.setAttribute('name', user._id);
+					index ++;
+
+					// ADD THE BUTTON's 'onclick' EVENT.
+					button.setAttribute('onclick', 'removeRow(this)');
+
+					td.appendChild(button);
+				}
+				else {
+					// CREATE AND ADD TEXTBOX IN EACH CELL.
+					var ele;
+					
+					if (c == 1)	//username
+					{
+						ele = document.createTextNode(user._id);						
+					}
+					else if (c == 2)	//username
+					{
+						ele = document.createTextNode(user.username);
+					}
+					else if(c == 3)	//score
+					{
+						ele = document.createTextNode(user.score);
+					}
+					else	//update history
+					{
+						var textedJson = JSON.stringify(user.updateHistory, undefined, 4);
+						ele = document.createElement("textarea");				
+						ele.readOnly  = true;				
+						ele.cols = "50";
+						ele.rows = "10";						
+						var textNode = document.createTextNode(textedJson);
+						ele.appendChild(textNode);
+					}
+					
+					td.appendChild(ele);
+				}
+			}
+		}
+
+		// DELETE TABLE ROW.
+		function removeRow(oButton) {
+			var empTab = document.getElementById('empTable');
+			empTab.deleteRow(oButton.parentNode.parentNode.rowIndex);       // BUTTON -> TD -> TR.
+			DeleteClicked(oButton.getAttribute('name'));
+		}
+
+	</script>
+  </body>
+</html>
